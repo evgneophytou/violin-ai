@@ -66,12 +66,19 @@ COPY --from=builder /app/railway-start.sh ./railway-start.sh
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone build output
+# Copy standalone build output (includes node_modules)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Make startup script executable
-RUN chmod +x railway-start.sh
+# Copy Prisma client and binaries to standalone node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Make startup script executable and set ownership
+RUN chmod +x railway-start.sh && chown nextjs:nodejs railway-start.sh
+
+# Ensure node_modules has correct permissions
+RUN chown -R nextjs:nodejs node_modules
 
 # Switch to non-root user
 USER nextjs
@@ -88,4 +95,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["sh", "railway-start.sh"]
