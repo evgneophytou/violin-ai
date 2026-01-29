@@ -11,9 +11,10 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (skip postinstall as we'll generate in builder stage)
+RUN npm ci --ignore-scripts
 
 # ================================
 # Stage 2: Builder
@@ -56,6 +57,7 @@ RUN adduser --system --uid 1001 nextjs
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Copy startup script for Railway
 COPY --from=builder /app/railway-start.sh ./railway-start.sh
