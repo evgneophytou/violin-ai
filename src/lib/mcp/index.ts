@@ -1,0 +1,15 @@
+export { 
+  MusicAIService, 
+  musicAIService, 
+  useMusicAI,
+  type MCPToolCall,
+  type MCPToolResult,
+  type TranscriptionRequest,
+  type TranscriptionResult,
+  type IntonationRequest,
+  type IntonationResult,
+  type AccompanimentRequest,
+  type AccompanimentResult,
+  type TrackSearchRequest,
+  type TrackResult,
+} from './music-ai-service';

@@ -1,0 +1,1 @@
+export { FingerboardVisualizer } from './FingerboardVisualizer';

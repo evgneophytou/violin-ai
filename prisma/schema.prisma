@@ -1,0 +1,316 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String            @id @default(cuid())
+  createdAt       DateTime          @default(now())
+  xp              Int               @default(0)
+  level           Int               @default(1)
+  currentStreak   Int               @default(0)
+  longestStreak   Int               @default(0)
+  lastPracticeAt  DateTime?
+  totalPracticeMinutes Int          @default(0)
+  sessions        PracticeSession[]
+  achievements    UserAchievement[]
+  reviewItems     ReviewItem[]
+  recordings      Recording[]
+  journalEntries  JournalEntry[]
+  exams           Exam[]
+}
+
+model PracticeSession {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+  durationMins  Int           @default(0)
+  exerciseCount Int           @default(0)
+  avgScore      Float         @default(0)
+  xpEarned      Int           @default(0)
+  focusArea     String?
+  difficulty    Int           @default(3)
+  performances  Performance[]
+}
+
+model Performance {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exerciseTitle String?
+  score       Int
+  pitchAcc    Float
+  rhythmAcc   Float
+  dynamicsScore Float         @default(0)
+  phrasingScore Float         @default(0)
+  createdAt   DateTime        @default(now())
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int               @default(0)
+  category    String
+  threshold   Int?
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+  progress      Int         @default(0)
+
+  @@unique([userId, achievementId])
+}
+
+model ReviewItem {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType       String    // 'scale', 'exercise', 'technique', 'piece'
+  itemKey        String    // e.g., 'G_major_scale', 'arpeggio_A_minor'
+  itemName       String?   // Human-readable name
+  difficulty     Float     @default(0)
+  stability      Float     @default(0)
+  retrievability Float     @default(1)
+  lastReview     DateTime?
+  nextReview     DateTime  @default(now())
+  repetitions    Int       @default(0)
+  lapses         Int       @default(0)
+
+  @@unique([userId, itemType, itemKey])
+}
+
+model Recording {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  audioData   String   // Base64 encoded audio data
+  duration    Int      // Duration in seconds
+  exerciseId  String?
+  exerciseTitle String?
+  createdAt   DateTime @default(now())
+  notes       String?
+  tags        String?  // JSON array of tags
+  isFavorite  Boolean  @default(false)
+}
+
+model JournalEntry {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime @default(now())
+  content         String   // Markdown content
+  mood            Int?     // 1-5 scale
+  energy          Int?     // 1-5 scale
+  goals           String?  // JSON array of goals
+  recordingIds    String?  // JSON array of recording IDs
+  practiceMinutes Int?
+  aiSummary       String?  // AI-generated summary
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Exam System Models
+
+model Exam {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grade           Int             // 0-8 (0 = Initial, 8 = Advanced+)
+  status          String          @default("in_progress") // in_progress, completed, graded
+  totalScore      Int?
+  maxScore        Int             @default(100)
+  result          String?         // fail, pass, merit, distinction
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+  gradedAt        DateTime?
+  feedback        String?         // Overall feedback from AI grader
+  components      ExamComponent[]
+  certificate     Certificate?
+}
+
+model ExamComponent {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  type        String   // scales, piece, sight_reading, aural, technique
+  title       String?  // Human-readable title
+  maxScore    Int
+  score       Int?
+  feedback    String?  // Component-specific feedback
+  audioData   String?  // Base64 encoded audio recording
+  videoData   String?  // Base64 encoded video (for technique analysis)
+  analysis    String?  // JSON containing detailed analysis
+  exerciseData String? // JSON containing exercise content (e.g., notes for sight reading)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id               String   @id @default(cuid())
+  examId           String   @unique
+  exam             Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  grade            Int
+  result           String   // pass, merit, distinction
+  score            Int
+  issuedAt         DateTime @default(now())
+  recipientName    String?
+  pdfUrl           String?
+  verificationCode String   @unique
+}
+
+// Repertoire System Models
+
+model Piece {
+  id               String          @id @default(cuid())
+  title            String
+  composer         String
+  era              String          // baroque, classical, romantic, modern, contemporary
+  difficulty       Int             // 1-10 scale
+  abrsm            Int?            // ABRSM grade 1-8
+  rcm              Int?            // RCM grade 1-10
+  duration         Int?            // Duration in minutes
+  key              String?         // e.g., "G major", "D minor"
+  techniques       String          // JSON array of techniques required
+  style            String?         // e.g., "concerto", "sonata", "etude", "folk"
+  movements        Int             @default(1)
+  hasAccompaniment Boolean         @default(false)
+  description      String?
+  publicDomain     Boolean         @default(false)
+  imslpUrl         String?
+  youtubeUrl       String?
+  createdAt        DateTime        @default(now())
+  userProgress     UserPieceProgress[]
+}
+
+model UserPieceProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  pieceId         String
+  piece           Piece     @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  status          String    @default("not_started") // not_started, learning, practicing, polishing, mastered
+  startedAt       DateTime?
+  masteredAt      DateTime?
+  currentMovement Int       @default(1)
+  practiceTime    Int       @default(0) // Total minutes spent
+  lastPracticed   DateTime?
+  notes           String?   // User notes about the piece
+  rating          Int?      // User's own difficulty rating 1-5
+
+  @@unique([userId, pieceId])
+}
+
+// Practice Schedule Models
+
+model PracticeSchedule {
+  id              String          @id @default(cuid())
+  userId          String
+  name            String          @default("My Practice Plan")
+  weeklyGoalMins  Int             @default(420) // 7 hours default
+  dailyGoalMins   Int             @default(60)
+  focusAreas      String          // JSON array of focus areas
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  items           ScheduleItem[]
+}
+
+model ScheduleItem {
+  id              String          @id @default(cuid())
+  scheduleId      String
+  schedule        PracticeSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int             // 0-6 (Sunday-Saturday)
+  timeSlot        String?         // e.g., "morning", "afternoon", "evening"
+  activityType    String          // warmup, scales, technique, repertoire, sight_reading, review
+  durationMins    Int
+  pieceId         String?         // Optional reference to a piece
+  description     String?
+  order           Int             @default(0)
+}
+
+// Reference Recording Models
+
+model ReferenceRecording {
+  id              String   @id @default(cuid())
+  pieceId         String?
+  title           String
+  artist          String
+  description     String?
+  url             String?  // External URL (YouTube, Spotify, etc.)
+  audioData       String?  // Local audio data if uploaded
+  duration        Int?     // Duration in seconds
+  source          String   // youtube, spotify, imslp, upload
+  isPublic        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+}
+
+// Feature Usage Analytics Models
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  sessionId   String   // Browser session ID
+  userId      String?  // Optional user reference (hashed for privacy)
+  event       String   // e.g., "tab_viewed", "exercise_generated", "recording_started"
+  feature     String   // e.g., "practice", "exam", "coach", "my_pieces"
+  properties  Json?    // Additional event data (non-PII)
+  duration    Int?     // Duration in seconds (for timed events)
+  timestamp   DateTime @default(now())
+
+  @@index([feature, timestamp])
+  @@index([event, timestamp])
+  @@index([sessionId])
+  @@index([timestamp])
+}
+
+model FeatureSession {
+  id          String    @id @default(cuid())
+  sessionId   String    // Browser session ID
+  userId      String?   // Optional user reference (hashed for privacy)
+  feature     String    // Feature name
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  duration    Int?      // Total seconds spent on feature
+
+  @@index([feature, startedAt])
+  @@index([sessionId])
+}
+
+model DailyFeatureAggregate {
+  id            String   @id @default(cuid())
+  date          DateTime @db.Date
+  feature       String
+  uniqueUsers   Int      @default(0)
+  totalSessions Int      @default(0)
+  totalDuration Int      @default(0) // Total seconds spent
+  eventCount    Int      @default(0)
+
+  @@unique([date, feature])
+  @@index([date])
+  @@index([feature])
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  role      String   @default("viewer") // viewer, developer, admin
+  createdAt DateTime @default(now())
+  lastLogin DateTime?
+}

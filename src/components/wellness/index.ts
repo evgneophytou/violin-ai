@@ -1,0 +1,1 @@
+export { WellnessTab } from './WellnessTab';

@@ -39,3 +39,32 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# Database files (SQLite)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/dev.db-journal
+
+# Log files
+*.log
+
+# Secrets and credentials
+*.key
+*.crt
+*.cert
+secrets/
+credentials/
+*.credentials
+*.secret
+
+# Railway
+.railway
+
+# Cursor/Editor state
+.cursor/projects
+agent-transcripts

@@ -1,0 +1,93 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnp
+.pnp.js
+
+# Next.js build output
+.next
+out
+build
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*.sublime-*
+
+# Environment files (SECURITY - never include in container)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env*.local
+*.env
+
+# Testing
+coverage
+.nyc_output
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.*
+vitest.config.*
+
+# Misc
+*.log
+*.md
+!README.md
+Dockerfile*
+docker-compose*
+.dockerignore
+LICENSE
+
+# OS files
+.DS_Store
+Thumbs.db
+*.bak
+
+# Database files (SECURITY - never include)
+*.db
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/*_migration.sql
+
+# Secrets and credentials (SECURITY)
+*.pem
+*.key
+*.crt
+*.cert
+secrets/
+credentials/
+*.credentials
+*.secret
+
+# Cursor/Editor
+.cursor
+*.plan.md
+agent-transcripts
+
+# Documentation
+docs
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.temp
+
+# Railway specific
+railway.toml
