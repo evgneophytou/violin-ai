@@ -24,6 +24,6 @@ fi
 
 # Start the application
 echo "========================================="
-echo "Starting Next.js server on port ${PORT:-3000}..."
+echo "Starting Next.js server on port ${PORT:-8080}..."
 echo "========================================="
 exec node server.js
