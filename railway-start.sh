@@ -14,11 +14,11 @@ fi
 echo "DATABASE_URL is set (length: ${#DATABASE_URL})"
 
 # Run database migrations
-echo "Running database migrations..."
-if npx prisma migrate deploy; then
-  echo "✓ Migrations completed successfully"
+echo "Syncing database schema..."
+if npx prisma db push --accept-data-loss; then
+  echo "✓ Schema synced successfully"
 else
-  echo "✗ Migration failed with exit code $?"
+  echo "✗ Schema sync failed with exit code $?"
   exit 1
 fi
 
