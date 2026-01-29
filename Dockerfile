@@ -70,9 +70,12 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma client and binaries to standalone node_modules
+# Copy Prisma and database dependencies to standalone node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/pg ./node_modules/pg
+COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
 
 # Make startup script executable and set ownership
 RUN chmod +x railway-start.sh && chown nextjs:nodejs railway-start.sh
