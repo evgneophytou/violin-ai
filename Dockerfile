@@ -58,24 +58,28 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json ./package-lock.json
 
 # Copy startup script for Railway
 COPY --from=builder /app/railway-start.sh ./railway-start.sh
+
+# Install ONLY production dependencies needed for Prisma migrations
+RUN npm ci --omit=dev --ignore-scripts
 
 # Set correct permissions for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone build output (includes node_modules)
+# Copy standalone build output (includes node_modules for Next.js)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma and database dependencies to standalone node_modules
+# Copy generated Prisma Client to ensure it's available
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/pg ./node_modules/pg
-COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
+
+# Generate Prisma Client in the runner (ensures all engines are present)
+RUN npx prisma generate
 
 # Make startup script executable and set ownership
 RUN chmod +x railway-start.sh && chown nextjs:nodejs railway-start.sh

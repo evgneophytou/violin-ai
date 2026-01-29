@@ -15,7 +15,7 @@ echo "DATABASE_URL is set (length: ${#DATABASE_URL})"
 
 # Run database migrations
 echo "Running database migrations..."
-if node node_modules/prisma/build/index.js migrate deploy; then
+if npx prisma migrate deploy; then
   echo "✓ Migrations completed successfully"
 else
   echo "✗ Migration failed with exit code $?"
